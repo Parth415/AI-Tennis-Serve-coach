@@ -1,5 +1,5 @@
 {
-  "name": "Serve Sensei",
+  "name": "Fedal as a coach",
   "description": "An AI-powered tennis serve analyzer that provides personalized feedback and drills to help you improve your serve. Upload an image of your serve and receive expert guidance on your form, technique, and biomechanics.",
   "requestFramePermissions": [
     "camera",

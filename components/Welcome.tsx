@@ -6,9 +6,10 @@ import { AlertTriangleIcon } from './icons/AlertTriangleIcon';
 interface WelcomeProps {
     hasError: boolean;
     errorMessage: string | null;
+    mode: 'practice' | 'upload';
 }
 
-export const Welcome: React.FC<WelcomeProps> = ({ hasError, errorMessage }) => {
+export const Welcome: React.FC<WelcomeProps> = ({ hasError, errorMessage, mode }) => {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center p-4">
             {hasError ? (
@@ -27,10 +28,22 @@ export const Welcome: React.FC<WelcomeProps> = ({ hasError, errorMessage }) => {
             ) : (
                 <>
                     <InfoIcon className="h-16 w-16 text-green-500 opacity-50 mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-700">Your Live Coach is Ready</h3>
-                    <p className="mt-2 text-gray-500">
-                        When you're ready to begin, press the "Start Session" button. The AI will be ready to listen and provide feedback.
-                    </p>
+                    {mode === 'practice' ? (
+                         <>
+                            <h3 className="text-xl font-semibold text-gray-700">Ready to Practice?</h3>
+                            <p className="mt-2 text-gray-500">
+                                Press "Start Recording" to begin your session. When you're done, press "Stop & Analyze" to get feedback from your AI coach.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <h3 className="text-xl font-semibold text-gray-700">Analyze Your Serve</h3>
+                            <p className="mt-2 text-gray-500">
+                                Upload an image of your serve to get personalized feedback on your form and technique from the AI coach.
+                            </p>
+                            <p className="mt-1 text-sm text-gray-400">(Video analysis is coming soon!)</p>
+                        </>
+                    )}
                 </>
             )}
         </div>

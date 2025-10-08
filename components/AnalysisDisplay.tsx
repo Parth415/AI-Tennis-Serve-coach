@@ -2,9 +2,11 @@
 import React from 'react';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { LightbulbIcon } from './icons/LightbulbIcon';
+import { Feedback } from './Feedback';
 
 interface AnalysisDisplayProps {
   analysis: string;
+  sessionId: string;
 }
 
 // This component is defined outside of AnalysisDisplay to prevent re-creation on every render.
@@ -37,12 +39,13 @@ const FormattedAnalysis: React.FC<{ text: string }> = ({ text }) => {
 };
 
 
-export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ analysis }) => {
+export const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ analysis, sessionId }) => {
   return (
     <div className="h-full overflow-y-auto">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">AI Coach Feedback</h2>
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <FormattedAnalysis text={analysis} />
+        <Feedback analysisId={sessionId} />
       </div>
     </div>
   );
