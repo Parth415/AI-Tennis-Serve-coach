@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Welcome } from '../components/Welcome';
 import { LoadingSpinner } from '../components/icons/LoadingSpinner';
@@ -14,6 +13,8 @@ interface CoachProps {
   userProfile: UserProfile;
 }
 
+const FRAME_CAPTURE_INTERVAL = 500; // ms, 2fps
+
 const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
   const [mode, setMode] = useState<'practice' | 'upload'>('practice');
 
@@ -22,6 +23,10 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const videoFramesRef = useRef<{ mimeType: string, data: string }[]>([]);
+  const frameCaptureIntervalRef = useRef<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null); // Ref for the hidden video element
+  const canvasRef = useRef<HTMLCanvasElement>(null); // Ref for the hidden canvas
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   // Upload state
@@ -48,6 +53,9 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
         });
         if (active) {
           setStream(mediaStream);
+          if (videoRef.current) {
+              videoRef.current.srcObject = mediaStream;
+          }
           currentStream = mediaStream; 
           setError(null);
         } else {
@@ -94,6 +102,23 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
     setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
   };
 
+  const captureFrame = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        const base64Data = dataUrl.split(',')[1];
+        if (base64Data) {
+            videoFramesRef.current.push({ mimeType: 'image/jpeg', data: base64Data });
+        }
+    }
+  }, []);
+
   const handleStartRecording = useCallback(() => {
     if (!stream) {
       setError("Media stream is not available.");
@@ -103,6 +128,7 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
     setAnalysis(null);
     setCurrentSessionId(null);
     audioChunksRef.current = [];
+    videoFramesRef.current = [];
 
     try {
       const recorder = new MediaRecorder(stream);
@@ -115,6 +141,11 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
       };
 
       recorder.onstop = async () => {
+        if (frameCaptureIntervalRef.current) {
+          clearInterval(frameCaptureIntervalRef.current);
+          frameCaptureIntervalRef.current = null;
+        }
+
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         
         const reader = new FileReader();
@@ -122,7 +153,7 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
         reader.onloadend = async () => {
           try {
               const base64Data = (reader.result as string).split(',')[1];
-              const analysisResult = await analyzePracticeSession(base64Data, audioBlob.type, userProfile);
+              const analysisResult = await analyzePracticeSession(base64Data, audioBlob.type, videoFramesRef.current, userProfile);
               setAnalysis(analysisResult);
               onSessionAnalyzed(analysisResult, 'practice');
               setCurrentSessionId(`temp_${Date.now()}`);
@@ -140,12 +171,13 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
       };
 
       recorder.start();
+      frameCaptureIntervalRef.current = window.setInterval(captureFrame, FRAME_CAPTURE_INTERVAL);
       setIsRecording(true);
     } catch (err) {
       setError("Failed to start recording.");
       console.error(err);
     }
-  }, [stream, onSessionAnalyzed, userProfile]);
+  }, [stream, onSessionAnalyzed, userProfile, captureFrame]);
   
   const handleStopRecordingAndAnalyze = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -253,6 +285,10 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
 
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+        {/* Hidden elements for video processing */}
+        <video ref={videoRef} autoPlay playsInline muted className="hidden"></video>
+        <canvas ref={canvasRef} className="hidden"></canvas>
+
         <div className="flex border-b border-gray-200">
             <TabButton active={mode === 'practice'} onClick={() => switchMode('practice')}>
                 Practice Session
@@ -267,7 +303,7 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
                 <div className="p-6 md:p-8 border-b md:border-b-0 md:border-r border-gray-200 flex flex-col">
                 <h2 className="text-2xl font-bold text-gray-700 mb-4">Practice Session</h2>
                 <p className="text-gray-600 mb-6">
-                    Record your serves and get a full analysis from the AI coach at the end of your session.
+                    Record your serves to get a full biomechanical analysis from the AI coach.
                 </p>
                 <LiveFeed 
                   stream={stream} 
@@ -300,6 +336,7 @@ const Coach: React.FC<CoachProps> = ({ onSessionAnalyzed, userProfile }) => {
                     <div className="flex flex-col items-center justify-center h-full">
                         <LoadingSpinner className="h-12 w-12 text-green-600"/>
                         <p className="mt-4 text-lg font-semibold text-gray-700">Analyzing your session...</p>
+                        <p className="mt-1 text-sm text-gray-500">This may take a moment.</p>
                     </div>
                 )}
                 {!isLoading && !analysis && (

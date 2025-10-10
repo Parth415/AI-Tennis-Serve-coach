@@ -1,61 +1,38 @@
+
 import React, { useState, useEffect } from 'react';
 import { ThumbsUpIcon } from './icons/ThumbsUpIcon';
 import { ThumbsDownIcon } from './icons/ThumbsDownIcon';
+import * as storageService from '../services/storageService';
 
 interface FeedbackProps {
   analysisId: string;
 }
 
-// Helper to check for localStorage availability safely.
-// This IIFE runs once when the module is loaded.
-const isLocalStorageAvailable = (() => {
-  try {
-    const storage = window.localStorage;
-    const x = '__storage_test__';
-    storage.setItem(x, x);
-    storage.removeItem(x);
-    return true;
-  } catch (e) {
-    return false;
-  }
-})();
-
-
 export const Feedback: React.FC<FeedbackProps> = ({ analysisId }) => {
-  const storageKey = `feedback_${analysisId}`;
   const [vote, setVote] = useState<'up' | 'down' | null>(null);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   useEffect(() => {
     // Only try to access storage if it's available.
-    if (isLocalStorageAvailable) {
-      try {
-        const storedVote = localStorage.getItem(storageKey);
-        if (storedVote === 'up' || storedVote === 'down') {
+    if (storageService.isStorageAvailable) {
+        const storedVote = storageService.getFeedback(analysisId);
+        if (storedVote) {
           setVote(storedVote);
           setFeedbackSubmitted(true);
         }
-      } catch (error) {
-        // This catch is a fallback, but the initial check should prevent it.
-        console.warn('Could not access localStorage for feedback:', error);
-      }
     }
-  }, [storageKey]);
+  }, [analysisId]);
 
   const handleVote = (newVote: 'up' | 'down') => {
-    if (feedbackSubmitted || !isLocalStorageAvailable) return;
+    if (feedbackSubmitted || !storageService.isStorageAvailable) return;
 
-    try {
-      localStorage.setItem(storageKey, newVote);
-      setVote(newVote);
-      setFeedbackSubmitted(true);
-    } catch (error) {
-      console.error('Could not save feedback to localStorage:', error);
-    }
+    storageService.saveFeedback(analysisId, newVote);
+    setVote(newVote);
+    setFeedbackSubmitted(true);
   };
 
   // If storage is not available, don't render the component at all.
-  if (!isLocalStorageAvailable) {
+  if (!storageService.isStorageAvailable) {
     return null;
   }
 

@@ -6,7 +6,7 @@ import { ConversationTranscript } from './ConversationTranscript';
 import { LoadingSpinner } from './icons/LoadingSpinner';
 import { AlertTriangleIcon } from './icons/AlertTriangleIcon';
 
-// FIX: Define a minimal interface for SpeechRecognition to provide type safety
+// Define a minimal interface for SpeechRecognition to provide type safety
 // for the non-standard browser API, resolving the "Cannot find name 'SpeechRecognition'" error.
 interface SpeechRecognition {
   continuous: boolean;
@@ -26,14 +26,22 @@ interface ConversationalCoachProps {
 }
 
 // Check for API support outside the component
-// FIX: Cast window to `any` to access non-standard SpeechRecognition APIs and rename to avoid shadowing the type.
+// Cast window to `any` to access non-standard SpeechRecognition APIs and rename to avoid shadowing the type.
 const SpeechRecognitionApi = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 const isSpeechSupported = !!SpeechRecognitionApi && 'speechSynthesis' in window;
 
 const createSystemInstruction = (analysis: PracticeAnalysis): string => {
-  const strengths = analysis.strengths.join(', ');
-  const improvements = analysis.areasForImprovement.map(i => i.point).join(', ');
-  // MODIFICATION: Enhanced the system instruction to better handle "why" questions.
+  // Collect strengths and improvements from the new phase-based analysis structure.
+  const phases = [
+    analysis.stanceAndSetup,
+    analysis.tossAndWindup,
+    analysis.trophyPose,
+    analysis.contactAndPronation,
+    analysis.followThrough,
+  ];
+  const strengths = phases.map(p => p.positive).join('; ');
+  const improvements = phases.map(p => p.improvement).join('; ');
+
   return `You are "Serve Sensei", an expert tennis coach. Your student just finished a practice session.
 Here is the summary of their performance:
 - Total Serves: ${analysis.totalServes}
@@ -104,14 +112,11 @@ export const ConversationalCoach: React.FC<ConversationalCoachProps> = ({ analys
         setStatus(prev => prev === 'listening' ? 'idle' : prev);
     };
     
-    // ENHANCEMENT: Refined error handler with more specific messages.
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
       let errorMessage = "An unknown error occurred with speech recognition.";
-      // This error occurs if the user denies microphone permission.
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           errorMessage = "Microphone access was denied. Please allow microphone access in your browser settings and try again.";
-      // This error occurs if the user clicks the mic but doesn't speak.
       } else if (event.error === 'no-speech') {
           errorMessage = "I didn't hear anything. Please try again."
       }
@@ -161,40 +166,30 @@ export const ConversationalCoach: React.FC<ConversationalCoachProps> = ({ analys
     }
   };
 
-  // ENHANCEMENT: Refined this function with clearer logic and comments for state management.
   const handleMicClick = () => {
     if (!recognitionRef.current) return;
 
-    // State: Speaking -> Idle. Allows user to interrupt the coach.
     if (status === 'speaking') {
       window.speechSynthesis.cancel();
       setStatus('idle');
       return;
     }
 
-    // State: Listening -> Idle. Allows user to manually stop listening.
     if (status === 'listening') {
       recognitionRef.current.stop();
-      // The `onend` event handler will set the status to 'idle'.
       return;
     }
     
-    // State: Idle -> Listening. The primary action to start recognition.
     if (status === 'idle') {
       try {
-        // Clear any previous errors before starting a new recognition attempt.
         setError(null); 
         recognitionRef.current.start();
-        // The `onstart` event handler will set the status to 'listening'.
       } catch (e) {
         console.error("Could not start recognition:", e);
-        // This catch handles synchronous errors, like if recognition is already running.
-        // Asynchronous errors (like permission denial) are caught by the `onerror` handler.
         setError("Failed to start the microphone. Please check permissions and try again.");
         setStatus('idle');
       }
     }
-    // State: Processing. Do nothing; the button should be disabled.
   };
 
   const buttonContent = useMemo(() => {

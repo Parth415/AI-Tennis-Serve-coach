@@ -1,11 +1,9 @@
 import React from 'react';
 import { PracticeAnalysis } from '../types';
-import { MetricCard } from './MetricCard';
-import { CheckCircleIcon } from './icons/CheckCircleIcon';
-import { LightbulbIcon } from './icons/LightbulbIcon';
 import { Feedback } from './Feedback';
 import { VerbalFeedbackControl } from './VerbalFeedbackControl';
 import { ConversationalCoach } from './ConversationalCoach';
+import { ServePhaseCard } from './ServePhaseCard';
 
 interface AnalyticsDashboardProps {
   data: PracticeAnalysis;
@@ -15,18 +13,30 @@ interface AnalyticsDashboardProps {
 const generateVerbalFeedbackScript = (data: PracticeAnalysis): string => {
     return `
         Great session! I detected a total of ${data.totalServes} serves. 
-        My overall impression is that ${data.overallImpression.toLowerCase()}
+        My overall impression is that ${data.overallImpression.toLowerCase()}.
+        Let's break down your form. For your stance and setup, the main thing to work on is ${data.stanceAndSetup.improvement}.
+        For your toss and wind-up, focus on ${data.tossAndWindup.improvement}.
+        And for your follow-through, remember to work on ${data.followThrough.improvement}.
+        Keep up the great work!
     `;
 }
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data, sessionId }) => {
   const verbalScript = generateVerbalFeedbackScript(data);
 
+  const phases = [
+    { title: "Stance & Setup", data: data.stanceAndSetup },
+    { title: "Toss & Wind-up", data: data.tossAndWindup },
+    { title: "Trophy Pose", data: data.trophyPose },
+    { title: "Contact & Pronation", data: data.contactAndPronation },
+    { title: "Follow-Through", data: data.followThrough },
+  ];
+
   return (
     <div className="h-full overflow-y-auto space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-800">Session Analytics</h2>
-        <p className="text-sm text-gray-500">{data.overallImpression}</p>
+        <h2 className="text-2xl font-bold text-gray-800">In-Depth Serve Biomechanics</h2>
+        <p className="text-sm text-gray-500 mt-1">{data.overallImpression}</p>
       </div>
       
       {/* Verbal Feedback */}
@@ -38,60 +48,13 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data, se
         <p className="text-5xl font-bold text-green-600">{data.totalServes}</p>
       </div>
 
-      {/* Key Metrics */}
+      {/* Biomechanics Breakdown */}
       <div>
-        <h3 className="text-xl font-semibold text-gray-700 mb-3">Key Metrics</h3>
+        <h3 className="text-xl font-semibold text-gray-700 mb-3">Biomechanics Breakdown</h3>
         <div className="space-y-4">
-          <MetricCard
-            label="Good Toss"
-            count={data.metrics.goodToss.count}
-            total={data.totalServes}
-            description={data.metrics.goodToss.description}
-          />
-          <MetricCard
-            label="Good Pronation"
-            count={data.metrics.goodPronation.count}
-            total={data.totalServes}
-            description={data.metrics.goodPronation.description}
-          />
-          <MetricCard
-            label="Good Follow-Through"
-            count={data.metrics.goodFollowThrough.count}
-            total={data.totalServes}
-            description={data.metrics.goodFollowThrough.description}
-          />
-        </div>
-      </div>
-      
-      {/* Qualitative Feedback */}
-      <div className="space-y-4">
-        {/* Strengths */}
-        <div>
-          <div className="flex items-center">
-            <CheckCircleIcon className="h-6 w-6 text-green-500 flex-shrink-0" />
-            <h3 className="ml-2 text-xl font-semibold text-gray-800">Strengths</h3>
-          </div>
-          <ul className="mt-2 ml-8 list-disc list-outside space-y-1 text-gray-700">
-            {data.strengths.map((strength, index) => (
-              <li key={index}>{strength}</li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Areas for Improvement */}
-        <div>
-           <div className="flex items-center">
-            <LightbulbIcon className="h-6 w-6 text-yellow-500 flex-shrink-0" />
-            <h3 className="ml-2 text-xl font-semibold text-gray-800">Areas for Improvement</h3>
-          </div>
-           <ul className="mt-2 ml-8 space-y-3 text-gray-700">
-            {data.areasForImprovement.map((item, index) => (
-              <li key={index}>
-                <p className="font-semibold">{item.point}</p>
-                <p className="text-sm text-gray-600"><strong>Drill:</strong> {item.drill}</p>
-              </li>
-            ))}
-          </ul>
+          {phases.map(phase => (
+            <ServePhaseCard key={phase.title} title={phase.title} feedback={phase.data} />
+          ))}
         </div>
       </div>
       
