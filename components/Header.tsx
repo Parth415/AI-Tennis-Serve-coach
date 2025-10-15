@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TennisBallIcon } from './icons/TennisBallIcon';
-import { UserIcon } from './icons/UserIcon';
 import { HistoryIcon } from './icons/HistoryIcon';
 import { AnalyticsIcon } from './icons/AnalyticsIcon';
 import { LogoutIcon } from './icons/LogoutIcon';
 import { MenuIcon } from './icons/MenuIcon';
 import { XIcon } from './icons/XIcon';
 
-type Page = 'coach' | 'profile' | 'history' | 'analytics';
+type Page = 'coach' | 'progress' | 'history';
 
 interface HeaderProps {
   currentPage: Page;
@@ -81,17 +80,13 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage, cur
                 <TennisBallIcon className="h-5 w-5 mr-2" />
                 <span>Coach</span>
               </NavButton>
-              <NavButton onClick={() => handleNavClick('profile')} isActive={currentPage === 'profile'}>
-                <UserIcon className="h-5 w-5 mr-2" />
-                <span>Profile</span>
+              <NavButton onClick={() => handleNavClick('progress')} isActive={currentPage === 'progress'}>
+                 <AnalyticsIcon className="h-5 w-5 mr-2" />
+                <span>Progress</span>
               </NavButton>
               <NavButton onClick={() => handleNavClick('history')} isActive={currentPage === 'history'}>
                  <HistoryIcon className="h-5 w-5 mr-2" />
                 <span>History</span>
-              </NavButton>
-              <NavButton onClick={() => handleNavClick('analytics')} isActive={currentPage === 'analytics'}>
-                 <AnalyticsIcon className="h-5 w-5 mr-2" />
-                <span>Analytics</span>
               </NavButton>
             </nav>
 
@@ -133,19 +128,15 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage, cur
                     <TennisBallIcon className="h-5 w-5 mr-3" />
                     Coach
                 </NavButton>
-                <NavButton onClick={() => handleNavClick('profile')} isActive={currentPage === 'profile'} isMobile>
-                    <UserIcon className="h-5 w-5 mr-3" />
-                    Profile
+                <NavButton onClick={() => handleNavClick('progress')} isActive={currentPage === 'progress'} isMobile>
+                    <AnalyticsIcon className="h-5 w-5 mr-3" />
+                    Progress
                 </NavButton>
                 <NavButton onClick={() => handleNavClick('history')} isActive={currentPage === 'history'} isMobile>
                     <HistoryIcon className="h-5 w-5 mr-3" />
                     History
                 </NavButton>
-                <NavButton onClick={() => handleNavClick('analytics')} isActive={currentPage === 'analytics'} isMobile>
-                    <AnalyticsIcon className="h-5 w-5 mr-3" />
-                    Analytics
-                </NavButton>
-
+                
                 <div className="border-t border-gray-200 pt-4 mt-2">
                     <div className="px-3 mb-3">
                         <p className="text-sm font-medium text-gray-800">Signed in as</p>

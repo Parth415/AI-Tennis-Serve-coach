@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TennisBallIcon } from '../components/icons/TennisBallIcon';
 
 interface LoginProps {
-  onLogin: (email: string, pass: string) => boolean;
+  onLogin: (email: string, pass:string) => boolean;
   onSwitchToSignUp: () => void;
   onSwitchToReset: () => void;
 }
@@ -40,13 +40,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignUp, onSwitchToRese
         <div className="bg-white rounded-2xl shadow-lg p-8">
             <h2 className="text-2xl font-bold text-center text-gray-800 mb-1">Welcome Back!</h2>
             <p className="text-center text-gray-600 mb-6">Sign in to continue your training.</p>
-
-            <div className="my-4 bg-green-50 border border-green-200 text-green-800 px-3 py-2 rounded-lg text-sm" role="alert">
-                <p className="font-bold">For Preview:</p>
-                <p>Use the demo account to log in instantly.</p>
-                <p className="mt-1"><strong>Email:</strong> demo@example.com</p>
-                <p><strong>Password:</strong> password123</p>
-            </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>

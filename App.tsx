@@ -2,9 +2,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import Coach from './pages/Coach';
-import Profile from './pages/Profile';
+import Progress from './pages/Progress';
 import History from './pages/History';
-import Analytics from './pages/Analytics';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import ResetPassword from './pages/ResetPassword';
@@ -12,7 +11,7 @@ import * as storageService from './services/storageService';
 import { Session, UserProfile, PracticeAnalysis, UserAccount } from './types';
 import { AlertTriangleIcon } from './components/icons/AlertTriangleIcon';
 
-type Page = 'coach' | 'profile' | 'history' | 'analytics';
+type Page = 'coach' | 'progress' | 'history';
 type AuthPage = 'login' | 'signup' | 'reset';
 
 // This component holds the main application logic and is only rendered when a user is logged in.
@@ -50,12 +49,10 @@ const AppContent: React.FC<{ userEmail: string; onLogout: () => void; headerTop:
     switch (currentPage) {
       case 'coach':
         return <Coach onSessionAnalyzed={handleSessionAnalyzed} userProfile={userProfile} />;
-      case 'profile':
-        return <Profile userProfile={userProfile} setUserProfile={setUserProfile} />;
+      case 'progress':
+        return <Progress sessionHistory={sessionHistory} userProfile={userProfile} setUserProfile={setUserProfile} />;
       case 'history':
         return <History sessionHistory={sessionHistory} />;
-      case 'analytics':
-        return <Analytics sessionHistory={sessionHistory} />;
       default:
         return <Coach onSessionAnalyzed={handleSessionAnalyzed} userProfile={userProfile} />;
     }

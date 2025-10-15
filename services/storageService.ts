@@ -38,9 +38,7 @@ const set = <T>(key: string, value: T): void => {
 };
 
 // --- Accounts ---
-const DEMO_EMAIL = 'demo@example.com';
-const DEMO_PASSWORD = 'password123';
-const DEFAULT_ACCOUNTS: Record<string, UserAccount> = { [DEMO_EMAIL]: { password: DEMO_PASSWORD } };
+const DEFAULT_ACCOUNTS: Record<string, UserAccount> = {};
 
 export const getAccounts = (): Record<string, UserAccount> => {
     const accounts = get('userAccounts', {});

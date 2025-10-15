@@ -43,7 +43,7 @@ const Insight: React.FC<{ data: ChartDataPoint[] }> = ({ data }) => {
     );
 }
 
-// The summary for the first session now displays scores for all five metrics.
+// The summary for the first session now displays scores for all five metrics in a clean list.
 const SingleSessionSummary: React.FC<{ sessionData: PracticeAnalysis }> = ({ sessionData }) => (
     <div className="text-center py-12">
         <AnalyticsIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -51,11 +51,11 @@ const SingleSessionSummary: React.FC<{ sessionData: PracticeAnalysis }> = ({ ses
         <p className="mt-2 text-gray-500 mb-6">
             Complete one more session to start tracking your progress over time.
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center max-w-2xl mx-auto">
+        <div className="max-w-sm mx-auto space-y-3">
              {(Object.keys(METRIC_CONFIG) as MetricKey[]).map(key => (
-                 <div key={key} className="bg-gray-100 p-3 rounded-lg">
-                    <p className="text-sm font-medium text-gray-600">{METRIC_CONFIG[key].title}</p>
-                    <p className="text-2xl font-bold text-green-600">{sessionData[key].score * 10}%</p>
+                 <div key={key} className="bg-gray-100 p-3 rounded-lg flex items-baseline justify-between">
+                    <p className="text-sm font-medium text-gray-600 text-left">{METRIC_CONFIG[key].title}</p>
+                    <p className="text-2xl font-bold text-green-600">{sessionData[key] ? `${sessionData[key].score * 10}%` : 'N/A'}</p>
                 </div>
             ))}
         </div>
@@ -68,7 +68,18 @@ const Analytics: React.FC<AnalyticsProps> = ({ sessionHistory }) => {
 
   const practiceSessions = useMemo(() => {
     return sessionHistory
-      .filter(s => s.type === 'practice' && typeof s.data === 'object' && (s.data as PracticeAnalysis).totalServes > 0)
+      .filter(s => {
+        // This robust filter ensures we only process sessions with the new, expected data structure.
+        // It prevents errors from legacy data formats that might exist in localStorage.
+        return s.type === 'practice' && 
+               typeof s.data === 'object' && 
+               s.data !== null && 
+               'stanceAndSetup' in s.data &&
+               'tossAndWindup' in s.data &&
+               'trophyPose' in s.data &&
+               'contactAndPronation' in s.data &&
+               'followThrough' in s.data
+      })
       .map(s => s as Session & { data: PracticeAnalysis })
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [sessionHistory]);
@@ -77,7 +88,6 @@ const Analytics: React.FC<AnalyticsProps> = ({ sessionHistory }) => {
     if (practiceSessions.length === 0) {
       return null;
     }
-    // Chart data is now calculated for all five metrics.
     const data: Record<MetricKey, ChartDataPoint[]> = {
         stanceAndSetup: [],
         tossAndWindup: [],
@@ -88,9 +98,8 @@ const Analytics: React.FC<AnalyticsProps> = ({ sessionHistory }) => {
 
     for (const s of practiceSessions) {
         (Object.keys(data) as MetricKey[]).forEach(key => {
-             if (s.data[key]) { // Defensive check
-                data[key].push({ x: s.timestamp, y: s.data[key].score * 10 });
-            }
+            // Because of the robust filter above, we can be confident s.data[key] exists.
+            data[key].push({ x: s.timestamp, y: s.data[key].score * 10 });
         });
     }
     return data;
@@ -149,7 +158,6 @@ const Analytics: React.FC<AnalyticsProps> = ({ sessionHistory }) => {
             <h2 className="text-2xl font-bold text-gray-800">Serve Analytics & Insights</h2>
             <p className="text-gray-600 mt-1">Track your serving performance over time.</p>
         </div>
-        {/* The tab container now wraps to accommodate all metrics on smaller screens. */}
         <div className="flex flex-wrap border-b border-gray-200">
             {(Object.keys(METRIC_CONFIG) as MetricKey[]).map((key) => (
                  <TabButton 
